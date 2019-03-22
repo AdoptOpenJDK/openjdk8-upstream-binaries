@@ -1,2 +1,4 @@
 # openjdk8-reference-binaries
-Not to be confused with openjdk8-binaries (which are AdoptOpenJDK's official binary release).  These are pure unaltered builds from the OpenJDK mercurial jdk8u code stream.
+Not to be confused with the official AdoptOpenJDK binaries [openjdk8-binaries](https://github.com/AdoptOpenJDK/openjdk8-binaries)
+
+openjdk8-reference-binaries are pure unaltered builds from the OpenJDK mercurial jdk8u code stream which have been built by Red Hat on behalf of the OpenJDK community jdk8u updates project.
