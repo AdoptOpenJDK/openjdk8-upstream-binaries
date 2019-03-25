@@ -12,9 +12,9 @@ This repository also contains [build scripts](install-rhel6-deps-build-openjdk8.
 
 On your newly commissioned RHEL 6 machine, you can run these steps to produce a build:
 
-    $ wget -O jdk8u-master.tar.gz "https://github.com/AdoptOpenJDK/openjdk8-upstream-binaries/archive/master.tar.gz"
-    $ tar -xf jdk8u-master.tar.gz
-    $ cd jdk8u-master
+    $ wget -O openjdk8-upstream-binaries-master.tar.gz "https://github.com/AdoptOpenJDK/openjdk8-upstream-binaries/archive/master.tar.gz"
+    $ tar -xf openjdk8-upstream-binaries-master.tar.gz
+    $ cd openjdk8-upstream-binaries-master
     $ bash install-rhel6-deps-build-openjdk8.sh
 
 This will produce a file in `/home/openjdk` called `openjdk-*-all-artefacts.tar.gz`,
@@ -31,11 +31,11 @@ Example:
 
     jdk8u/
     jdk8u/overall-build.log
-    jdk8u/build/release/images/openjdk-8u212-b00-debuginfo.tar.gz
-    jdk8u/build/release/images/openjdk-8u212-b00.tar.gz
-    jdk8u/build/openjdk-8u212-b00-sources.tar.gz
-    jdk8u/build/slowdebug/images/openjdk-8u212-b00-slowdebug.tar.gz
-    jdk8u/build/slowdebug/images/openjdk-8u212-b00-slowdebug-debuginfo.tar.gz
+    jdk8u/build/release/images/OpenJDK8U-x64_linux_8u212b01_ea-debuginfo.tar.gz
+    jdk8u/build/release/images/OpenJDK8U-x64_linux_8u212b01_ea.tar.gz
+    jdk8u/build/OpenJDK8U-sources_8u212b01_ea.tar.gz
+    jdk8u/build/slowdebug/images/OpenJDK8U-x64_linux_8u212b01_ea-slowdebug.tar.gz
+    jdk8u/build/slowdebug/images/OpenJDK8U-x64_linux_8u212b01_ea-slowdebug-debuginfo.tar.gz
 
 
 ### Only Build OpenJDK 8 (without Build Requirements)
@@ -43,7 +43,7 @@ Example:
 If you already have the build requirements for building OpenJDK 8 installed, you can
 use a simpler build script to build OpenJDK 8:
 
-    $ wget -O jdk8u-master.tar.gz "https://github.com/AdoptOpenJDK/openjdk8-upstream-binaries/archive/master.tar.gz"
-    $ tar -xf jdk8u-master.tar.gz
-    $ cd jdk8u-master
+    $ wget -O openjdk8-upstream-binaries-master.tar.gz "https://github.com/AdoptOpenJDK/openjdk8-upstream-binaries/archive/master.tar.gz"
+    $ tar -xf openjdk8-upstream-binaries-master.tar.gz
+    $ cd openjdk8-upstream-binaries-master
     $ bash build-openjdk8.sh
