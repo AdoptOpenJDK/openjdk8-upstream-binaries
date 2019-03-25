@@ -1,4 +1,4 @@
-#OpenJDK Upstream Binaries (JDK 8u)
+# OpenJDK Upstream Binaries (JDK 8u)
 
 Not to be confused with the official AdoptOpenJDK binaries [openjdk8-binaries](https://github.com/AdoptOpenJDK/openjdk8-binaries)
 
@@ -38,7 +38,7 @@ Example:
     jdk8u/build/slowdebug/images/openjdk-8u212-b00-slowdebug-debuginfo.tar.gz
 
 
-###Only Build OpenJDK 8 (without Build Requirements)
+### Only Build OpenJDK 8 (without Build Requirements)
 
 If you already have the build requirements for building OpenJDK 8 installed, you can
 use a simpler build script to build OpenJDK 8:
