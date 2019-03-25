@@ -46,8 +46,12 @@ set -e
 UPDATE=212
 BUILD=b01
 NAME="openjdk-8u\${UPDATE}-\${BUILD}"
-NAME_SUFFIX="ea-linux-x86_64"
-SOURCE_NAME="\$NAME-sources"
+TARBALL_BASE_NAME="OpenJDK8U"
+EA_SUFFIX="_ea"
+PLATFORM="x64_linux"
+TARBALL_VERSION="8u\${UPDATE}\${BUILD}\${EA_SUFFIX}"
+TARBALL_NAME="\${TARBALL_BASE_NAME}-\${PLATFORM}_\${TARBALL_VERSION}"
+SOURCE_NAME="\${TARBALL_BASE_NAME}-sources_\${TARBALL_VERSION}"
 
 CLONE_URL=https://hg.openjdk.java.net/jdk8u/jdk8u
 TAG="jdk8u212-b01"
@@ -80,7 +84,7 @@ build() {
 
   # Create a source tarball archive corresponding to the
   # binary build
-  tar -c -z -f ../\$SOURCE_NAME.tar.gz --exclude-vcs --exclude='**.patch*' --exclude='overall-build.log' .
+  tar -c -z -f ../\${SOURCE_NAME}.tar.gz --exclude-vcs --exclude='**.patch*' --exclude='overall-build.log' .
 
   for debug in release slowdebug; do
     bash configure \
@@ -102,18 +106,19 @@ build() {
     pushd build/\$debug/images
       if [ "\${debug}_" == "slowdebug_" ]; then
         NAME="\$NAME-\$debug"
+        TARBALL_NAME="\$TARBALL_NAME-\$debug"
       fi
       mv j2sdk-image \$NAME
       cp src.zip \$NAME
-      tar -c -f \$NAME-\$NAME_SUFFIX.tar \$NAME --exclude='**.debuginfo'
-      gzip \$NAME-\$NAME_SUFFIX.tar
-      tar -c -f \$NAME-\$NAME_SUFFIX-debuginfo.tar \$(find \${NAME}/ -name \*.debuginfo)
-      gzip \$NAME-\$NAME_SUFFIX-debuginfo.tar
+      tar -c -f \${TARBALL_NAME}.tar \$NAME --exclude='**.debuginfo'
+      gzip \${TARBALL_NAME}.tar
+      tar -c -f \${TARBALL_NAME}-debuginfo.tar \$(find \${NAME}/ -name \*.debuginfo)
+      gzip \${TARBALL_NAME}-debuginfo.tar
       rm \$NAME/src.zip
       mv \$NAME j2sdk-image
     popd
   done
-  mv ../\$SOURCE_NAME.tar.gz build/
+  mv ../\${SOURCE_NAME}.tar.gz build/
   set +x
 }
 
