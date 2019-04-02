@@ -44,7 +44,7 @@ cat > $BUILD_SCRIPT <<EOF
 set -e
 
 UPDATE=212
-BUILD=b01
+BUILD=b02
 NAME="openjdk-8u\${UPDATE}-\${BUILD}"
 TARBALL_BASE_NAME="OpenJDK8U"
 EA_SUFFIX="_ea"
@@ -54,7 +54,7 @@ TARBALL_NAME="\${TARBALL_BASE_NAME}-\${PLATFORM}_\${TARBALL_VERSION}"
 SOURCE_NAME="\${TARBALL_BASE_NAME}-sources_\${TARBALL_VERSION}"
 
 CLONE_URL=https://hg.openjdk.java.net/jdk8u/jdk8u
-TAG="jdk8u212-b01"
+TAG="jdk8u\${UPDATE}-\${BUILD}"
 
 clone() {
   url=\$1
