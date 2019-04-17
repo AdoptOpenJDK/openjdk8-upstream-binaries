@@ -84,7 +84,7 @@ build() {
 
   # Create a source tarball archive corresponding to the
   # binary build
-  tar -c -z -f ../\${SOURCE_NAME}.tar.gz --exclude-vcs --exclude='**.patch*' --exclude='overall-build.log' .
+  tar -c -z -f ../\${SOURCE_NAME}.tar.gz --transform "s|^|\${NAME}-sources/|" --exclude-vcs --exclude='**.patch*' --exclude='overall-build.log' .
 
   for debug in release slowdebug; do
     bash configure \
