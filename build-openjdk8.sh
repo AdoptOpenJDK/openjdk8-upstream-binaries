@@ -25,13 +25,18 @@ build() {
   # binary build
   tar -c -z -f ../${SOURCE_NAME}.tar.gz --transform "s|^|${NAME}-sources/|" --exclude-vcs --exclude='**.patch*' --exclude='overall-build.log' .
 
+  MILESTONE="fcs"
+  if [ "${EA_SUFFIX}_" != "_" ]; then
+    MILESTONE="ea"
+  fi
+
   for debug in release slowdebug; do
     bash configure \
        --with-boot-jdk="/usr/lib/jvm/java-1.7.0-openjdk.x86_64" \
        --with-debug-level="$debug" \
        --with-conf-name="$debug" \
        --enable-unlimited-crypto \
-       --with-milestone="fcs" \
+       --with-milestone="$MILESTONE" \
        --with-native-debug-symbols=external \
        --with-cacerts-file=/etc/pki/java/cacerts \
        --with-update-version=$UPDATE \
