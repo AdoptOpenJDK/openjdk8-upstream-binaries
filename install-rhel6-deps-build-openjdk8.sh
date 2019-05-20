@@ -102,7 +102,6 @@ build() {
        --enable-unlimited-crypto \
        --with-milestone="\$MILESTONE" \
        --with-native-debug-symbols=external \
-       --with-cacerts-file=/etc/pki/java/cacerts \
        --with-update-version=\$UPDATE \
        --with-build-number=\$BUILD
     target="bootcycle-images"
