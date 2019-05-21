@@ -46,11 +46,13 @@ set -e
 UPDATE=222
 BUILD=b02
 NAME="openjdk-8u\${UPDATE}-\${BUILD}"
+JRE_NAME="\${NAME}-jre"
 TARBALL_BASE_NAME="OpenJDK8U"
 EA_SUFFIX="_ea"
 PLATFORM="x64_linux"
-TARBALL_VERSION="8u\${UPDATE}\${BUILD}\${EA_SUFFIX}"
-TARBALL_NAME="\${TARBALL_BASE_NAME}-\${PLATFORM}_\${TARBALL_VERSION}"
+PLATFORM_VERSION="\${PLATFORM}_\${TARBALL_VERSION}"
+TARBALL_NAME="\${TARBALL_BASE_NAME}-jdk_\${PLATFORM_VERSION}"
+TARBALL_NAME_JRE="\${TARBALL_BASE_NAME}-jre_\${PLATFORM_VERSION}"
 SOURCE_NAME="\${TARBALL_BASE_NAME}-sources_\${TARBALL_VERSION}"
 
 CLONE_URL=https://hg.openjdk.java.net/jdk8u/jdk8u
@@ -113,6 +115,7 @@ build() {
         NAME="\$NAME-\$debug"
         TARBALL_NAME="\$TARBALL_NAME-\$debug"
       fi
+      # JDK package
       mv j2sdk-image \$NAME
       cp src.zip \$NAME
       tar -c -f \${TARBALL_NAME}.tar \$NAME --exclude='**.debuginfo'
@@ -121,6 +124,14 @@ build() {
       gzip \${TARBALL_NAME}-debuginfo.tar
       rm \$NAME/src.zip
       mv \$NAME j2sdk-image
+      # JRE package (release only)
+      if [ "\${debug}_" == "release_" ]; then
+        mv j2re-image \$JRE_NAME
+        tar -c -f \${TARBALL_NAME_JRE}.tar \$JRE_NAME --exclude='**.debuginfo'
+        gzip \${TARBALL_NAME_JRE}.tar
+        tar -c -f \${TARBALL_NAME_JRE}-debuginfo.tar \$(find \${JRE_NAME}/ -name \*.debuginfo)
+        gzip \${TARBALL_NAME_JRE}-debuginfo.tar
+      fi
     popd
   done
   mv ../\${SOURCE_NAME}.tar.gz build/
