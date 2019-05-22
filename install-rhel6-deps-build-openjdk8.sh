@@ -132,6 +132,7 @@ build() {
         gzip \${TARBALL_NAME_JRE}.tar
         tar -c -f \${TARBALL_NAME_JRE}-debuginfo.tar \$(find \${JRE_NAME}/ -name \*.debuginfo)
         gzip \${TARBALL_NAME_JRE}-debuginfo.tar
+        mv \$JRE_NAME j2re-image
       fi
     popd
   done
