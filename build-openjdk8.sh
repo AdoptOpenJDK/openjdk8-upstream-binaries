@@ -16,6 +16,14 @@ SOURCE_NAME="${TARBALL_BASE_NAME}-sources_${TARBALL_VERSION}"
 
 build() {
   set -x
+  # On some systems the per user process limit is set too low
+  # by default (e.g. 1024). This may make the build fail on
+  # systems with many cores (e.g. 64). Raise the limit to 1/2
+  # of the maximum amount of threads allowed by the kernel.
+  if [ -e /proc/sys/kernel/threads-max ]; then
+    ulimit -u $(( $(cat /proc/sys/kernel/threads-max) / 2))
+  fi
+
   rm -rf build
 
   # Add patch to be able to build on EL 6
