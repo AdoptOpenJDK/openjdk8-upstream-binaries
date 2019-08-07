@@ -156,7 +156,7 @@ build() {
       # JDK package
       mv j2sdk-image \$NAME
       cp src.zip \$NAME
-      tar -c -f \${TARBALL_NAME}.tar \$NAME --exclude='**.debuginfo'
+      tar -c -f \${TARBALL_NAME}.tar --exclude='**.debuginfo' \$NAME
       gzip \${TARBALL_NAME}.tar
       tar -c -f \${TARBALL_NAME}-debuginfo.tar \$(find \${NAME}/ -name \*.debuginfo)
       gzip \${TARBALL_NAME}-debuginfo.tar
@@ -165,7 +165,7 @@ build() {
       # JRE package (release only)
       if [ "\${debug}_" == "release_" ]; then
         mv j2re-image \$JRE_NAME
-        tar -c -f \${TARBALL_NAME_JRE}.tar \$JRE_NAME --exclude='**.debuginfo'
+        tar -c -f \${TARBALL_NAME_JRE}.tar --exclude='**.debuginfo' \$JRE_NAME
         gzip \${TARBALL_NAME_JRE}.tar
         tar -c -f \${TARBALL_NAME_JRE}-debuginfo.tar \$(find \${JRE_NAME}/ -name \*.debuginfo)
         gzip \${TARBALL_NAME_JRE}-debuginfo.tar
