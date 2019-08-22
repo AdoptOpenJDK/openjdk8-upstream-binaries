@@ -8,17 +8,43 @@
 
 # 8u update cycle release version number
 UPDATE=232
+JDK_URL=https://hg.openjdk.java.net/jdk8u/jdk8u
 JDK_REPO=jdk8u
+BASE_PATH="$1"
 
 if [ -z "${WORKSPACE}" ]; then
-  WORKSPACE="."
+  WORKSPACE="$(pwd)"
 fi
 
-pushd $JDK_REPO
+if [ -z "${BASE_PATH}" ]; then
+  BASE_PATH="$(pwd)"
+fi
+
+check_clone() {
+  echo "Checking top HG repo exists..."
+  # Ensure parent folder exists
+  if [ ! -e "$BASE_PATH" ]; then
+    mkdir -p "$BASE_PATH"
+  fi
+  if [ -d "$BASE_PATH/$JDK_REPO" ]; then
+    echo "$JDK_REPO exists, skipping clone."
+  else
+    pushd $BASE_PATH
+      hg clone $JDK_URL $JDK_REPO
+    popd
+  fi
+}
 
 # Export a local home so hg doesn't use some user-local aliases
 tmp_dir="$(mktemp -d)"
 export HOME=$tmp_dir
+
+echo "Using base path: $BASE_PATH"
+
+# Ensure clone exists
+check_clone
+
+pushd "$BASE_PATH/$JDK_REPO"
 
 hg pull -u
 
