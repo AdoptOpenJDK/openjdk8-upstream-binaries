@@ -84,6 +84,8 @@ TARBALL_VERSION="8u\${UPDATE}\${BUILD}\${EA_SUFFIX}"
 PLATFORM_VERSION="\${PLATFORM}_\${TARBALL_VERSION}"
 TARBALL_NAME="\${TARBALL_BASE_NAME}-jdk_\${PLATFORM_VERSION}"
 TARBALL_NAME_JRE="\${TARBALL_BASE_NAME}-jre_\${PLATFORM_VERSION}"
+TARBALL_NAME_JFR="\${TARBALL_BASE_NAME}-jdk-jfr_\${PLATFORM_VERSION}"
+TARBALL_NAME_JFR_JRE="\${TARBALL_BASE_NAME}-jre-jfr_\${PLATFORM_VERSION}"
 SOURCE_NAME="\${TARBALL_BASE_NAME}-sources_\${TARBALL_VERSION}"
 
 CLONE_URL=https://hg.openjdk.java.net/jdk8u/jdk8u
@@ -132,10 +134,18 @@ build() {
     MILESTONE="ea"
   fi
 
-  for debug in release slowdebug; do
+  for debug in release release-jfr slowdebug; do
+    if [ "\$debug" == "release-jfr" ]; then
+       flag="--enable-jfr"
+       dbg_level="release"
+    else
+       flag=""
+       dbg_level="\$debug"
+    fi
     bash configure \
        --with-boot-jdk="/usr/lib/jvm/java-1.7.0-openjdk.x86_64" \
-       --with-debug-level="\$debug" \
+       "\$flag" \
+       --with-debug-level="\$dbg_level" \
        --with-conf-name="\$debug" \
        --enable-unlimited-crypto \
        --with-milestone="\$MILESTONE" \
@@ -147,28 +157,34 @@ build() {
       target="images"
     fi
     make LOG_LEVEL=debug CONF=\$debug \$target
+    archive_name="\$TARBALL_NAME"
+    jre_archive_name="\$TARBALL_NAME_JRE"
+    if [ "\${debug}_" == "release-jfr_" ]; then
+      archive_name="\$TARBALL_NAME_JFR"
+      jre_archive_name="\$TARBALL_NAME_JFR_JRE"
+    fi
     # Package it up
     pushd build/\$debug/images
       if [ "\${debug}_" == "slowdebug_" ]; then
         NAME="\$NAME-\$debug"
-        TARBALL_NAME="\$TARBALL_NAME-\$debug"
+        archive_name="\$archive_name-\$debug"
       fi
       # JDK package
       mv j2sdk-image \$NAME
       cp src.zip \$NAME
-      tar -c -f \${TARBALL_NAME}.tar --exclude='**.debuginfo' \$NAME
-      gzip \${TARBALL_NAME}.tar
-      tar -c -f \${TARBALL_NAME}-debuginfo.tar \$(find \${NAME}/ -name \*.debuginfo)
-      gzip \${TARBALL_NAME}-debuginfo.tar
+      tar -c -f \${archive_name}.tar --exclude='**.debuginfo' \$NAME
+      gzip \${archive_name}.tar
+      tar -c -f \${archive_name}-debuginfo.tar \$(find \${NAME}/ -name \*.debuginfo)
+      gzip \${archive_name}-debuginfo.tar
       rm \$NAME/src.zip
       mv \$NAME j2sdk-image
       # JRE package (release only)
-      if [ "\${debug}_" == "release_" ]; then
+      if [ "\${debug}_" == "release_" ] || [ "\${debug}_" == "release-jfr_" ]; then
         mv j2re-image \$JRE_NAME
-        tar -c -f \${TARBALL_NAME_JRE}.tar --exclude='**.debuginfo' \$JRE_NAME
-        gzip \${TARBALL_NAME_JRE}.tar
-        tar -c -f \${TARBALL_NAME_JRE}-debuginfo.tar \$(find \${JRE_NAME}/ -name \*.debuginfo)
-        gzip \${TARBALL_NAME_JRE}-debuginfo.tar
+        tar -c -f \${jre_archive_name}.tar --exclude='**.debuginfo' \$JRE_NAME
+        gzip \${jre_archive_name}.tar
+        tar -c -f \${jre_archive_name}-debuginfo.tar \$(find \${JRE_NAME}/ -name \*.debuginfo)
+        gzip \${jre_archive_name}-debuginfo.tar
         mv \$JRE_NAME j2re-image
       fi
     popd
