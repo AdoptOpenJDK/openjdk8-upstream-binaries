@@ -5,6 +5,8 @@ UPDATE=262
 BUILD=b01
 NAME="openjdk-8u${UPDATE}-${BUILD}"
 JRE_NAME="${NAME}-jre"
+JFR_NAME="\${NAME}-jfr"
+JFR_JRE_NAME="\${JRE_NAME}-jfr"
 TARBALL_BASE_NAME="OpenJDK8U"
 EA_SUFFIX="_ea"
 PLATFORM="x64_linux"
@@ -71,6 +73,8 @@ build() {
     if [ "${debug}_" == "release-jfr_" ]; then
       archive_name="$TARBALL_NAME_JFR"
       jre_archive_name="$TARBALL_NAME_JFR_JRE"
+      NAME=$JFR_NAME
+      JRE_NAME=$JFR_JRE_NAME
     fi
     # Package it up
     pushd build/$debug/images
