@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-UPDATE=262
-BUILD=b10
+UPDATE=265
+BUILD=b01
 NAME="openjdk-8u${UPDATE}-${BUILD}"
 JRE_NAME="${NAME}-jre"
 TARBALL_BASE_NAME="OpenJDK8U"
