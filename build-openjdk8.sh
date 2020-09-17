@@ -2,7 +2,7 @@
 set -e
 
 UPDATE=272
-BUILD=b07
+BUILD=b08
 NAME="openjdk-8u${UPDATE}-${BUILD}"
 JRE_NAME="${NAME}-jre"
 TARBALL_BASE_NAME="OpenJDK8U"
