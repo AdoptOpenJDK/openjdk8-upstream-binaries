@@ -1,6 +1,27 @@
 #!/bin/bash
 set -e
 
+# Determine platform name. Currently supported:
+#
+# x86_64 => x64_linux
+# aarch64 => aarch64_linux
+#
+platform_name() {
+  arch=$(uname -m)
+  case $arch in
+  x86_64)
+    echo "x64_linux"
+    ;;
+  aarch64)
+    echo "aarch64_linux"
+    ;;
+  *)
+    echo "Unsupported platform '$arch'" 1>&2
+    exit 1
+    ;;
+  esac
+}
+
 BRS_FILE=openjdk_build_deps.txt
 BUILD_SCRIPT=build-openjdk8.sh
 
@@ -69,6 +90,7 @@ fi
 
 useradd openjdk
 
+# Note: platform_name intentionally not escaped
 cat > $BUILD_SCRIPT <<EOF
 #!/bin/bash
 set -e
@@ -79,7 +101,7 @@ NAME="openjdk-8u\${UPDATE}-\${BUILD}"
 JRE_NAME="\${NAME}-jre"
 TARBALL_BASE_NAME="OpenJDK8U"
 EA_SUFFIX="_ea"
-PLATFORM="x64_linux"
+PLATFORM="$(platform_name)"
 TARBALL_VERSION="8u\${UPDATE}\${BUILD}\${EA_SUFFIX}"
 PLATFORM_VERSION="\${PLATFORM}_\${TARBALL_VERSION}"
 TARBALL_NAME="\${TARBALL_BASE_NAME}-jdk_\${PLATFORM_VERSION}"
@@ -134,7 +156,7 @@ build() {
 
   for debug in release slowdebug; do
     bash configure \
-       --with-boot-jdk="/usr/lib/jvm/java-1.7.0-openjdk.x86_64" \
+       --with-boot-jdk="/usr/lib/jvm/java" \
        --with-debug-level="\$debug" \
        --with-conf-name="\$debug" \
        --enable-unlimited-crypto \
@@ -182,8 +204,8 @@ clone \$CLONE_URL \$TAG \$TARGET_FOLDER
 pushd \$TARGET_FOLDER
   build 2>&1 | tee overall-build.log
 popd
-ALL_ARTEFACTS="\$NAME\$EA_SUFFIX-all-artefacts.tar"
-tar -c -f \$ALL_ARTEFACTS --transform "s|^\$TARGET_FOLDER/|\$NAME\$EA_SUFFIX-all-artefacts/|g" \$(echo \$(find \$TARGET_FOLDER/build -name \*.tar.gz) \$TARGET_FOLDER/overall-build.log)
+ALL_ARTEFACTS="\$NAME\$EA_SUFFIX-$(platform_name)-all-artefacts.tar"
+tar -c -f \$ALL_ARTEFACTS --transform "s|^\$TARGET_FOLDER/|\$NAME\$EA_SUFFIX-all-artefacts/$(platform_name)/|g" \$(echo \$(find \$TARGET_FOLDER/build -name \*.tar.gz) \$TARGET_FOLDER/overall-build.log)
 gzip \$ALL_ARTEFACTS
 ls -lh \$(pwd)/*.tar.gz
 EOF
