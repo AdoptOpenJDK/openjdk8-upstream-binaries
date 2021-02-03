@@ -1,13 +1,34 @@
 #!/bin/bash
 set -e
 
+# Determine platform name. Currently supported:
+#
+# x86_64 => x64_linux
+# aarch64 => aarch64_linux
+#
+platform_name() {
+  arch=$(uname -m)
+  case $arch in
+  x86_64)
+    echo "x64_linux"
+    ;;
+  aarch64)
+    echo "aarch64_linux"
+    ;;
+  *)
+    echo "Unsupported platform '$arch'" 1>&2
+    exit 1
+    ;;
+  esac
+}
+
 UPDATE=292
 BUILD=b01
 NAME="openjdk-8u${UPDATE}-${BUILD}"
 JRE_NAME="${NAME}-jre"
 TARBALL_BASE_NAME="OpenJDK8U"
 EA_SUFFIX="_ea"
-PLATFORM="x64_linux"
+PLATFORM="$(platform_name)"
 TARBALL_VERSION="8u${UPDATE}${BUILD}${EA_SUFFIX}"
 PLATFORM_VERSION="${PLATFORM}_${TARBALL_VERSION}"
 TARBALL_NAME="${TARBALL_BASE_NAME}-jdk_${PLATFORM_VERSION}"
@@ -43,7 +64,7 @@ build() {
 
   for debug in release slowdebug; do
     bash configure \
-       --with-boot-jdk="/usr/lib/jvm/java-1.7.0-openjdk.x86_64" \
+       --with-boot-jdk="/usr/lib/jvm/java" \
        --with-debug-level="$debug" \
        --with-conf-name="$debug" \
        --enable-unlimited-crypto \
@@ -88,7 +109,7 @@ build() {
 
 build 2>&1 | tee overall-build.log
 
-ALL_ARTEFACTS="$NAME-all-artefacts.tar"
+ALL_ARTEFACTS="$NAME-$(platform_name)-all-artefacts.tar"
 tar -c -f $ALL_ARTEFACTS $(find build -name \*.tar.gz) overall-build.log
 gzip $ALL_ARTEFACTS
 ls -lh *.tar.gz
