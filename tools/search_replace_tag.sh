@@ -53,7 +53,7 @@ parseTag
 
 debugPrint
 
-for f in build-openjdk8.sh install-rhel6-deps-build-openjdk8.sh; do
+for f in build-openjdk8.sh build8.cmd install-rhel6-deps-build-openjdk8.sh; do
   sed -i "s|EA_SUFFIX=.*|EA_SUFFIX=\"${EA_SUFFIX}\"|g" $f
   sed -i "s|BUILD=.*|BUILD=${BUILD}|g" $f
   sed -i "s|UPDATE=.*|UPDATE=${UPDATE}|g" $f
