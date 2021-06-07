@@ -31,7 +31,7 @@
 	set EA_SUFFIX="_ea"
 
 	rem uncomment to retrieve from jdk8u-dev repository
-	set DEV_REPO=-dev
+	rem set DEV_REPO=-dev
 
 	rem define build characteristics
 
