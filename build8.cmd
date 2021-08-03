@@ -13,7 +13,7 @@
 		set m3=
 		set m4=
 		set modules=
-		set EA_SUFFIX="_ea"
+		rem set EA_SUFFIX="_ea"
 		set set DEV_REPO=
 		set BUILD_JDK=
 		set JAVA_HOME=
