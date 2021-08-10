@@ -144,7 +144,7 @@
 	@echo *** Add temporary patch to be able to build on Windows
 	@echo on
 	set PATH=%HG_DIR%;C:\cygwin64\bin;%PATH%
-	pushd %WORK_DIR%/%OJDK_SRC_DIR%/hotspot
+	pushd "%WORK_DIR%/%OJDK_SRC_DIR%/hotspot"
   	wget -O JDK-8272214.patch "https://cr.openjdk.java.net/~andrew/openjdk8/8248901-fail/webrev.01/hotspot.patch" || exit /b 1
 	%HG% import --no-commit JDK-8272214.patch || exit /b 1
   	popd
