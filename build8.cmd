@@ -22,13 +22,13 @@
 	
 	rem define source version
 	set UPDATE=312
-	set BUILD=b06
+	set BUILD=b07
 	set MILESTONE=redhat
 	set OJDK_MILESTONE=8u
 	set OJDK_UPDATE=312
-	set OJDK_BUILD=b06
+	set OJDK_BUILD=b07
 	set OJDK_TAG=jdk%OJDK_MILESTONE%%OJDK_UPDATE%-%OJDK_BUILD%
-	set EA_SUFFIX="_ea"
+	rem set EA_SUFFIX="_ea"
 
 	rem uncomment to retrieve from jdk8u-dev repository
 	rem set DEV_REPO=-dev
