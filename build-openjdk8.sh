@@ -22,8 +22,8 @@ platform_name() {
   esac
 }
 
-UPDATE=312
-BUILD=b01
+UPDATE=322
+BUILD=b04
 NAME="openjdk-8u${UPDATE}-${BUILD}"
 JRE_NAME="${NAME}-jre"
 TARBALL_BASE_NAME="OpenJDK8U"
