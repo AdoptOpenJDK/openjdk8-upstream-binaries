@@ -50,7 +50,7 @@ zip
 unzip
 java-1.7.0-openjdk-devel
 openssl
-mercurial
+git
 wget
 patch
 gzip
@@ -108,7 +108,7 @@ TARBALL_NAME="\${TARBALL_BASE_NAME}-jdk_\${PLATFORM_VERSION}"
 TARBALL_NAME_JRE="\${TARBALL_BASE_NAME}-jre_\${PLATFORM_VERSION}"
 SOURCE_NAME="\${TARBALL_BASE_NAME}-sources_\${TARBALL_VERSION}"
 
-CLONE_URL=https://hg.openjdk.java.net/jdk8u/jdk8u
+CLONE_URL=https://github.com/openjdk/jdk8u
 TAG="jdk8u\${UPDATE}-\${BUILD}"
 
 clone() {
@@ -119,11 +119,9 @@ clone() {
     echo "Target directory \$targetdir already exists. Skipping clone"
     return
   fi
-  hg clone -u \$tag \$url \$targetdir
+  git clone \$url \$targetdir
   pushd \$targetdir
-    for i in corba hotspot jaxws jaxp jdk langtools nashorn; do
-      hg clone -u \$tag \$url/\$i
-    done
+  git checkout -b \$tag \$tag
   popd
 }
 
