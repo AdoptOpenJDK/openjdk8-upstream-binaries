@@ -8,8 +8,8 @@
 
 # 8u update cycle release version number
 UPDATE=322
-JDK_URL=https://hg.openjdk.java.net/jdk8u/jdk8u
-JDK_REPO=jdk8u
+JDK_URL=https://github.com/openjdk/jdk8u
+JDK_REPO=jdk8u-git
 BASE_PATH="$1"
 
 if [ -z "${WORKSPACE}" ]; then
@@ -21,7 +21,7 @@ if [ -z "${BASE_PATH}" ]; then
 fi
 
 check_clone() {
-  echo "Checking top HG repo exists..."
+  echo "Checking top Git repo exists..."
   # Ensure parent folder exists
   if [ ! -e "$BASE_PATH" ]; then
     mkdir -p "$BASE_PATH"
@@ -30,7 +30,7 @@ check_clone() {
     echo "$JDK_REPO exists, skipping clone."
   else
     pushd $BASE_PATH
-      hg clone $JDK_URL $JDK_REPO
+      git clone $JDK_URL $JDK_REPO
     popd
   fi
 }
@@ -46,31 +46,12 @@ check_clone
 
 pushd "$BASE_PATH/$JDK_REPO"
 
-hg pull -u
+git pull --tags origin master
 
 LAST_TAG="$(cat ${WORKSPACE}/latest_tag.txt 2> /dev/null || true)"
 
-for i in $(hg log --rev "max(tag('re:jdk8u${UPDATE}-b[0-9]{2}'))" --template "{tags}\n"); do
-  echo $i
-done | tee revs.txt
-num_tags=$(wc -l revs.txt | cut -d' ' -f1)
-
-# One revision might have been tagged multiple times, or we
-# might have a swtich from one GA release to the beginning of a
-# new update (build 0).
-if [ $num_tags -gt 1 ]; then
-   candidate=$(sed 's/jdk8u\([0-9]\{3\}\)-b.*/\1/g' revs.txt | sort -n | tail -n1)
-   candidates=$(grep $candidate revs.txt | wc -l)
-   if [ $candidates -gt 1 ]; then
-     # same revision tagged twice (no changes) case
-     TAG=$(sort revs.txt | tail -n1)
-   else
-     # GA => new update case
-     TAG=$(grep $candidate revs.txt)
-   fi
-else
-   TAG="$(cat revs.txt)"
-fi
+# We restrict the tag listing for the current update cycle. Hence the pattern to -l
+TAG=$(git tag -l "jdk8u${UPDATE}*" | sort | tail -n1)
 
 if [ -z "$TAG" ]; then
   echo "No tags for update $UPDATE found. This is an error." 1>&2
