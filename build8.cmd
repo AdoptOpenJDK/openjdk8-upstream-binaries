@@ -67,14 +67,10 @@
 	rem local directory for build toolchain, tools and libraries
 	set OJDKBUILD_DIR=%WORK_DIR%/ojdkbuild
 
-	rem Git/HG checkout of OpenJDK source
+	rem Git checkout of OpenJDK source
 	set USE_SCS=1
 	if defined JDK_GIT_REPO (
 		set USE_GIT=1
-		set USE_MERCURIAL=
-	) else (
-		set USE_GIT=
-		set USE_MERCURIAL=1
 	)
 
 	rem JDK configure script options
@@ -100,11 +96,6 @@
 	rem the remote repo for JDK sources
 	if defined USE_GIT (
 		set OJDK_REMOTE_REPO=%JDK_GIT_REPO%
-	) else (
-		if defined USE_MERCURIAL (
-			set OJDK_REMOTE_REPO_PROTOCOL=https://
-			set OJDK_REMOTE_REPO=hg.openjdk.java.net/jdk%OJDK_MILESTONE%/jdk%OJDK_MILESTONE%%DEV_REPO%
-		)
 	)
 
 	@echo *** work directory %WORK_DIR%
@@ -126,9 +117,6 @@
 
 	time /t
 	call :download_boot_git || exit /b 1
-	if defined USE_MERCURIAL (
-		call :download_mercurial || exit /b 1
-	)
 	set SAVEPATH=%PATH% 
 
 	if defined DOWNLOAD_TOOLS ( 
@@ -264,13 +252,6 @@
 				%GIT% checkout "%OJDK_TAG%" || exit /b 1
 			)
 		)
-		if defined USE_MERCURIAL (
-			if defined OJDK_TAG (
-				%HG% clone -u %OJDK_TAG% %OJDK_REMOTE_REPO_PROTOCOL%%OJDK_REMOTE_REPO% %OJDK_SRC_DIR% || exit /b 1
-			) else (
-				%HG% clone %OJDK_REMOTE_REPO_PROTOCOL%%OJDK_REMOTE_REPO% %OJDK_SRC_DIR% || exit /b 1
-			)
-		)
 	)
 
 	@echo *** fix permissions of jdk source code
@@ -283,9 +264,6 @@
 	pushd "%OJDK_SRC_PATH%"
 	if defined USE_GIT (
 		%GIT% log -1
-	)
-	if defined USE_MERCURIAL (
-		%HG% id || exit /b 1
 	)
 	popd
 	exit /b 0
@@ -524,16 +502,6 @@
 	pushd "%OJDK_SRC_PATH%"
 	make CONF=%OJDK_CONF% clean
 	popd || exit /b 1
-	exit /b 0
-
-:download_mercurial
-	@echo *** install mercurial
-	set HG=call :hg_cmd
-	exit /b 0
-	
-:hg_cmd
-	@echo calling mercurial %*
-	c:\cygwin64\bin\bash -c "/bin/hg %*" || exit /b 1
 	exit /b 0
 
 :download_boot_git
