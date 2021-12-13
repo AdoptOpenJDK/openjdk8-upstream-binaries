@@ -242,9 +242,9 @@
 	)
 
 	@echo *** fix permissions of jdk source code
-	rem takeown /f "%OJDK_SRC_PATH:/=\%" /r > nul || exit /b 1
-	rem icacls "%OJDK_SRC_PATH:/=\%" /reset /T /C /Q || exit /b 1
 	bash -c "chmod -R u+rwx ."
+	takeown /f "%OJDK_SRC_PATH:/=\%" /r > nul || exit /b 1
+	icacls "%OJDK_SRC_PATH:/=\%" /reset /T /C /Q || exit /b 1
 	@echo off
 	rem print out the SCS ID of what we are building
 	@echo *** current SCS changeset
