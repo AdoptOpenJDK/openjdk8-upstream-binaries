@@ -37,7 +37,7 @@
 	rem set DEV_REPO=-dev
 
 	rem uncomment and define to fetch OpenJDK source from GIT repo
-	set JDK_GIT_REPO=https://github.com/openjdk/jdk8u%DEV_REPO%.git
+	set OJDK_REMOTE_REPO=https://github.com/openjdk/jdk8u%DEV_REPO%.git
 
 	rem define build characteristics
 
@@ -67,12 +67,6 @@
 	rem local directory for build toolchain, tools and libraries
 	set OJDKBUILD_DIR=%WORK_DIR%/ojdkbuild
 
-	rem Git checkout of OpenJDK source
-	set USE_SCS=1
-	if defined JDK_GIT_REPO (
-		set USE_GIT=1
-	)
-
 	rem JDK configure script options
 
 	set OJDK_CONF=windows-x86_64-server-%OJDK_DEBUG_LEVEL%
@@ -92,11 +86,6 @@
 	rem local directory to clone JDK repo into
 	set OJDK_SRC_DIR=jdk%OJDK_MILESTONE%%DEV_REPO%
 	set OJDK_SRC_PATH=%WORK_DIR%/%OJDK_SRC_DIR%
-
-	rem the remote repo for JDK sources
-	if defined USE_GIT (
-		set OJDK_REMOTE_REPO=%JDK_GIT_REPO%
-	)
 
 	@echo *** work directory %WORK_DIR%
 	@echo *** JDK tag %OJDK_TAG%
@@ -245,12 +234,10 @@
 	if not exist "%OJDK_SRC_PATH%" (
 		@echo *** fetch JDK base repo
 		cd "%WORK_DIR%"
-		if defined USE_GIT (
-			%GIT% clone %OJDK_REMOTE_REPO% %OJDK_SRC_DIR% || exit /b 1
-			if defined OJDK_TAG (
-				cd %OJDK_SRC_DIR% || exit /b 1
-				%GIT% checkout "%OJDK_TAG%" || exit /b 1
-			)
+		%GIT% clone %OJDK_REMOTE_REPO% %OJDK_SRC_DIR% || exit /b 1
+		if defined OJDK_TAG (
+			cd %OJDK_SRC_DIR% || exit /b 1
+			%GIT% checkout "%OJDK_TAG%" || exit /b 1
 		)
 	)
 
@@ -262,9 +249,7 @@
 	rem print out the SCS ID of what we are building
 	@echo *** current SCS changeset
 	pushd "%OJDK_SRC_PATH%"
-	if defined USE_GIT (
-		%GIT% log -1
-	)
+	%GIT% log -1
 	popd
 	exit /b 0
 
