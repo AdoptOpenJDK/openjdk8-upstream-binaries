@@ -1,23 +1,26 @@
 	@echo on
 	setlocal EnableDelayedExpansion
 
+	time /t
+
 	rem get rid of build variables that might be kicking around on desktop environment
 	if not defined source_dir (
-		set WORK_DIR=
 		set source_dir=
 		set spec_dir=
-		set GRAAL_SRC_DIR=
+		set WORK_DIR=
 		set JAVA_HOME=
-		set m1=
-		set m2=
-		set m3=
-		set m4=
-		set modules=
-		set EA_SUFFIX="_ea"
-		set set DEV_REPO=
-		set BUILD_JDK=
-		set JAVA_HOME=
-		set BUILD_WITH_JFR=
+		set EA_SUFFIX=
+		set DEV_REPO=
+		set DOWNLOAD_TOOLS=1
+		set DOWNLOAD_JDK=1
+		set CLEAN_JDK=
+		set CONFIGURE_JDK=1
+		set REVERT_JDK=
+		set BUILD_JDK=1
+		set BUILD_JRE=1
+		set BUILD_DEMOS=1
+		set PACKAGE_RELEASE=1
+		set OJDK_DEBUG_LEVEL=release
 	)
 	
 	rem define source version
@@ -25,37 +28,29 @@
 	set BUILD=b04
 	set MILESTONE=redhat
 	set OJDK_MILESTONE=8u
-	set OJDK_UPDATE=322
-	set OJDK_BUILD=b04
+	set OJDK_UPDATE=%UPDATE%
+	set OJDK_BUILD=%BUILD%
 	set OJDK_TAG=jdk%OJDK_MILESTONE%%OJDK_UPDATE%-%OJDK_BUILD%
 	set EA_SUFFIX="_ea"
 
 	rem uncomment to retrieve from jdk8u-dev repository
 	rem set DEV_REPO=-dev
 
+	rem USE_SUB_REPOS=
+
+	rem uncomment and define to fetch OpenJDK source from GIT repo
+	set JDK_GIT_REPO=https://github.com/openjdk/jdk8u%DEV_REPO%.git
+
 	rem define build characteristics
 
-	set DOWNLOAD_JDK=1
-	set DOWNLOAD_TOOLS=1
-
-	rem define to clean the build before compile
-	set CLEAN_JDK=
-
-	set CONFIGURE_JDK=1
-
-	rem define to revert to checked out sources
-	set REVERT_JDK=
-
-	rem define to build jdk
-	set BUILD_JDK=1
-	set BUILD_JRE=1
-	set BUILD_DEMOS=1
+	rem log level for JDK 'make': valid choices info debug
+	set LOG_LEVEL=debug
 
 	rem valid choices: release slowdebug fastdebug
 	set OJDK_DEBUG_LEVEL=release
 
 	rem try to shorten paths for cygwin
-	rem perform all work in cygwins /tmp directory
+	rem perform all work in cygwin /tmp directory
 	rem use forward slashes
 	if not defined source_dir (
 		rem batch file build
@@ -63,7 +58,7 @@
 		set source_dir=!WORK_DIR!
 		set spec_dir=%~dp0
 	) else (
-		rem brew build
+		rem cloud build
 		set WORK_DIR=C:/tmp/build-8
 		if not defined spec_dir (
 			set spec_dir=%source_dir:\=/%
@@ -74,32 +69,28 @@
 	rem local directory for build toolchain, tools and libraries
 	set OJDKBUILD_DIR=%WORK_DIR%/ojdkbuild
 
-	rem CPU build or regular vanilla upstream
-	rem set CPU_MODE=1
-
-	rem Mercurial checkout or copy source from build server
-	rem use of build server is only valid for CPU builds
-	set USE_MERCURIAL=1
+	rem Git/HG checkout of OpenJDK source
+	set USE_SCS=1
+	if defined JDK_GIT_REPO (
+		set USE_GIT=1
+		set USE_MERCURIAL=
+	) else (
+		set USE_GIT=
+		set USE_MERCURIAL=1
+	)
 
 	rem JDK configure script options
 
-	rem log level for JDK 'make': valid choices info debug
-	set LOG_LEVEL=debug
+	set OJDK_CONF=windows-x86_64-server-%OJDK_DEBUG_LEVEL%
 
 	rem if set, delete debug files
 	if ".%OJDK_DEBUG_LEVEL%" == ".release" (
 		set DELETE_DEBUG_FILES=1
 	)
 
-	set OJDK_CONF=windows-x86_64-server-%OJDK_DEBUG_LEVEL%
-
 	rem define build tools repo and version
 	set OJDKBUILD_REPOBASE=https://github.com/ojdkbuild
 	set OJDKBUILD_TAG=b7bc723e18deefef701752b57dbd25c0072ef4a7
-
-
-	set PATH=C:/Windows/system32;C:/Windows
-	set PATH=C:/cygwin64/bin;%PATH%
 
 	rem uncomment to enable AV scan
 	rem set CLAMSCAN=C:/cygwin64/bin/clamscan.exe
@@ -109,9 +100,13 @@
 	set OJDK_SRC_PATH=%WORK_DIR%/%OJDK_SRC_DIR%
 
 	rem the remote repo for JDK sources
-	if defined USE_MERCURIAL (		
-		set OJDK_REMOTE_REPO_PROTOCOL=https://
-		set OJDK_REMOTE_REPO=hg.openjdk.java.net/jdk%OJDK_MILESTONE%/jdk%OJDK_MILESTONE%%DEV_REPO%
+	if defined USE_GIT (
+		set OJDK_REMOTE_REPO=%JDK_GIT_REPO%
+	) else (
+		if defined USE_MERCURIAL (
+			set OJDK_REMOTE_REPO_PROTOCOL=https://
+			set OJDK_REMOTE_REPO=hg.openjdk.java.net/jdk%OJDK_MILESTONE%/jdk%OJDK_MILESTONE%%DEV_REPO%
+		)
 	)
 
 	@echo *** work directory %WORK_DIR%
@@ -119,47 +114,74 @@
 	@echo *** debug level %OJDK_DEBUG_LEVEL%
 
 	rem ZIP_DIR_NAME is the directory the zipfile (RELEASE_ZIPFILE) will unpack into
-	set ZIP_DIR_NAME=openjdk-%OJDK_MILESTONE%%OJDK_UPDATE%-%OJDK_BUILD%
-	set RELEASE_ZIPFILE=OpenJDK8U-jdk_x64_windows_%OJDK_MILESTONE%%OJDK_UPDATE%%OJDK_BUILD%%EA_SUFFIX%.zip
-	@echo final JDK product will be !RELEASE_ZIPFILE! directory !ZIP_DIR_NAME!
+	if defined BUILD_JDK (
+		set ZIP_DIR_NAME=openjdk-%OJDK_MILESTONE%%OJDK_UPDATE%-%OJDK_BUILD%
+		set RELEASE_ZIPFILE=OpenJDK8U-jdk_x64_windows_%OJDK_MILESTONE%%OJDK_UPDATE%%OJDK_BUILD%%EA_SUFFIX%.zip
+		@echo final JDK product will be !RELEASE_ZIPFILE! directory !ZIP_DIR_NAME!
+	)
 
-	set ZIP_JRE_DIR_NAME=openjdk-%OJDK_MILESTONE%%OJDK_UPDATE%-%OJDK_BUILD%-jre
-	set RELEASE_JRE_ZIPFILE=OpenJDK8U-jre_x64_windows_%OJDK_MILESTONE%%OJDK_UPDATE%%OJDK_BUILD%%EA_SUFFIX%.zip
-	@echo final JRE product will be !RELEASE_JRE_ZIPFILE! directory !ZIP_JRE_DIR_NAME!
+	if defined BUILD_JRE (
+		set ZIP_JRE_DIR_NAME=openjdk-%OJDK_MILESTONE%%OJDK_UPDATE%-%OJDK_BUILD%-jre
+		set RELEASE_JRE_ZIPFILE=OpenJDK8U-jre_x64_windows_%OJDK_MILESTONE%%OJDK_UPDATE%%OJDK_BUILD%%EA_SUFFIX%.zip
+		@echo final JRE product will be !RELEASE_JRE_ZIPFILE! directory !ZIP_JRE_DIR_NAME!
+	)
 
-	call :download_git || exit /b 1
+	time /t
+	call :download_boot_git || exit /b 1
+	if defined USE_MERCURIAL (
+		call :download_mercurial || exit /b 1
+	)
 	set SAVEPATH=%PATH% 
+
 	if defined DOWNLOAD_TOOLS ( 
 		call :download_ojdkbuild || exit /b 1
-		call :download_mercurial || exit /b 1
+	) else (
+		@echo *** skipping JDK tool downloads
+	)
+	
+	call :setsdkenv
+	call :download_git || exit /b 1
+	
+	if defined DOWNLOAD_TOOLS ( 
 		call :build_freetype || exit /b 1
 	) else (
-		@echo *** skipping JDK build downloads
+		@echo *** skipping JDK tool downloads
+		call :download_git || exit /b 1
 	)
+	
+	time /t
 
 	if defined DOWNLOAD_JDK (
 		call :checkout_jdk_source || exit /b 1
 	)
-	
-	@echo *** Add temporary patch to be able to build on Windows
-	@echo on
-	set PATH=%HG_DIR%;C:\cygwin64\bin;%PATH%
-	pushd "%WORK_DIR%/%OJDK_SRC_DIR%/hotspot"
-  	wget -O JDK-8272214.patch "https://cr.openjdk.java.net/~andrew/openjdk8/8248901-fail/webrev.01/hotspot.patch" || exit /b 1
-	%HG% import --no-commit JDK-8272214.patch || exit /b 1
-  	popd
-
-	if defined CONFIGURE_JDK (
-		call :configure_jdk_build || exit /b 1
-	)
+	time /t
 
 	if defined CLEAN_JDK (
 		call :clean_jdk || exit /b 1
 	)
+	
+	if defined FIX_HEADER_PATCH (
+		@echo *** Add temporary patch to be able to build on Windows
+		@echo on
+		pushd "%WORK_DIR%/%OJDK_SRC_DIR%/hotspot"
+		C:\cygwin64\bin\wget -O JDK-8272214.patch "https://cr.openjdk.java.net/~andrew/openjdk8/8248901-fail/webrev.01/hotspot.patch" || exit /b 1
+		unix2dos JDK-8272214.patch
+		%HG% import --no-commit JDK-8272214.patch || exit /b 1
+		popd
+	)
+
+	if defined CONFIGURE_JDK (
+		call :configure_jdk_build || exit /b 1
+	)
+	time /t
 
 	if defined BUILD_JDK (
 		call :build_jdk || exit /b 1
-		call :build_jdk_zip || exit /b 1
+		time /t
+		rem call :test_jdk_version || exit /b 1
+		if defined PACKAGE_RELEASE (
+			call :build_jdk_zip || exit /b 1
+		)
 		if defined BUILD_JRE (
 			call :build_jre_zip || exit /b 1
 		)
@@ -167,11 +189,17 @@
 	) else (
 		@echo *** skipping jdk build
 	)
+	time /t
 
-	rem call :test_jdk_version || exit /b 1
+	if defined TEST_JDK (
+		call :setsdkenv
+		call :test_jdk || exit /b 1
+	) else (
+		@echo *** skipping jdk testing
+	)
 
 	@echo *** build is complete
-	exit /b 
+	exit /b 0
 
 :test_jdk_version
 	@echo testing JDK version strings
@@ -200,18 +228,18 @@
 		echo OpenJDK 64-Bit Server VM (build 25.%OJDK_UPDATE%-%OJDK_BUILD%, mixed mode^) >>%EXPECTED_VERSION_FILE%
 	)
 	set JDK_HOME=
-	if exist "%OJDK_SRC_PATH%/build/%OJDK_CONF%/images/%ZIP_DIR_NAME%" (
-		set JDK_HOME=%OJDK_SRC_PATH%/build/%OJDK_CONF%/images/%ZIP_DIR_NAME%
+	if exist "%OJDK_SRC_DIR%/build/%OJDK_CONF%/images/%ZIP_DIR_NAME%" (
+		set JDK_HOME=%OJDK_SRC_DIR%/build/%OJDK_CONF%/images/%ZIP_DIR_NAME%
 	)
-	if exist "%OJDK_SRC_PATH%/build/%OJDK_CONF%/images/j2sdk-image" (
-		set JDK_HOME=%OJDK_SRC_PATH%/build/%OJDK_CONF%/images/j2sdk-image
+	if exist "%OJDK_SRC_DIR%/build/%OJDK_CONF%/images/j2sdk-image" (
+		set JDK_HOME=%OJDK_SRC_DIR%/build/%OJDK_CONF%/images/j2sdk-image
 	)
 	if not defined JDK_HOME (
-		@echo *** no JDK_HOME found in %OJDK_SRC_PATH%/build/%OJDK_CONF%/images
+		@echo *** no JDK_HOME found in %OJDK_SRC_DIR%/build/%OJDK_CONF%/images
 		exit /b 1
 	)
 	%JDK_HOME:/=\%\bin\java -version 2>%ACTUAL_VERSION_FILE% || exit /b 1
-	c:\cygwin64\bin\diff -b %EXPECTED_VERSION_FILE% %ACTUAL_VERSION_FILE%
+	diff -b %EXPECTED_VERSION_FILE% %ACTUAL_VERSION_FILE%
 	if not %ERRORLEVEL% == 0 (
 		echo *** Version strings do not match.
 		echo expected:
@@ -223,92 +251,78 @@
 		echo version string passes test:
 		type %ACTUAL_VERSION_FILE%
 	)
-	exit /b
+	exit /b 0
 
 :checkout_jdk_source
 	@echo *** checkout the JDK
-	@echo *** - fetch JDK base repo
-	cd "%WORK_DIR%"
-	set PATH=%HG_DIR%;%PATH%
+	@echo on
 	if not exist "%OJDK_SRC_PATH%" (
-		if defined OJDK_TAG (
-			%HG% clone -u %OJDK_TAG% %OJDK_REMOTE_REPO_PROTOCOL%%OJDK_REMOTE_REPO% %OJDK_SRC_DIR% || exit /b 1
-		) else (
-			%HG% clone %OJDK_REMOTE_REPO_PROTOCOL%%OJDK_REMOTE_REPO% %OJDK_SRC_DIR% || exit /b 1
-		)
-	) else (
-		if defined REVERT_JDK (
-			call :revert_jdk_repo || exit /b 1
-			pushd "%OJDK_SRC_PATH%" || exit /b 1
-			%HG% pull -u || exit /b 1
-			if defined OJDK_TAG %HG% update --rev %OJDK_TAG% || exit /b 1
-			popd
-		)
-	)
-	@echo *** - fetch JDK subrepos
-	pushd "%OJDK_SRC_PATH%"
-	set jdkmodules=corba hotspot jaxp jaxws jdk langtools nashorn
-	for %%G in (!jdkmodules!) do (
-		set module=%%G
-		set repo=!module:/=_!
-		if not exist %%G (
+		@echo *** fetch JDK base repo
+		cd "%WORK_DIR%"
+		if defined USE_GIT (
+			%GIT% clone %OJDK_REMOTE_REPO% %OJDK_SRC_DIR% || exit /b 1
 			if defined OJDK_TAG (
-				%HG% clone -u %OJDK_TAG% %OJDK_REMOTE_REPO_PROTOCOL%%OJDK_REMOTE_REPO%/!repo! %%G || exit /b 1
-			) else (
-				%HG% clone %OJDK_REMOTE_REPO_PROTOCOL%%OJDK_REMOTE_REPO%/!repo! %%G || exit /b 1
-			)
-		) else (
-			if defined REVERT_JDK (
-				pushd %%G
-				%HG% pull -u || exit /b 1
-				if defined OJDK_TAG %HG% update --rev %OJDK_TAG% || exit /b 1
-				popd
+				cd %OJDK_SRC_DIR% || exit /b 1
+				%GIT% checkout "%OJDK_TAG%" || exit /b 1
 			)
 		)
-		pushd %%G
-		%HG% id
-		popd
+		if defined USE_MERCURIAL (
+			if defined OJDK_TAG (
+				%HG% clone -u %OJDK_TAG% %OJDK_REMOTE_REPO_PROTOCOL%%OJDK_REMOTE_REPO% %OJDK_SRC_DIR% || exit /b 1
+			) else (
+				%HG% clone %OJDK_REMOTE_REPO_PROTOCOL%%OJDK_REMOTE_REPO% %OJDK_SRC_DIR% || exit /b 1
+			)
+		)
 	)
-	popd
-
-	@echo *** fix permissions of jdk source code
-	takeown /f "%OJDK_SRC_PATH:/=\%" /r > nul || exit /b 1
-	icacls "%OJDK_SRC_PATH:/=\%" /reset /T /C /Q || exit /b 1
-	@echo off
-	call :setsdkenv
-	set PATH=C:/cygwin64/bin;%PATH%
-	@echo *** current mercurial changeset
-	pushd "%OJDK_SRC_PATH%"
-	%HG% id || exit /b 1
-	popd
-	exit /b
-
-:revert_jdk_repo
-	@echo *** revert JDK base repo
-	set PATH=%HG_DIR%;%PATH%
-	if exist "%OJDK_SRC_PATH%" (
-		pushd "%OJDK_SRC_PATH%" || exit /b 1
-		%HG% revert --all || exit /b 1
-		@echo *** revert JDK subrepos
+	if defined USE_SUB_REPOS (
+		@echo *** fetch JDK subrepos
+		pushd "%OJDK_SRC_DIR%"
 		set jdkmodules=corba hotspot jaxp jaxws jdk langtools nashorn
 		for %%G in (!jdkmodules!) do (
 			set module=%%G
 			set repo=!module:/=_!
-			if exist %%G (
-				pushd %%G || exit /b 1
-				%HG% revert --all || exit /b 1
-				popd
+			if not exist %%G (
+				if defined USE_GIT (
+					%GIT% clone %OJDK_REMOTE_REPO% %%G || exit /b 1
+					if defined OJDK_TAG (
+						cd %%G || exit /b 1
+						%GIT% checkout "%OJDK_TAG%" || exit /b 1
+					)
+				)
+				if defined USE_MERCURIAL (
+					if defined OJDK_TAG (
+						%HG% clone -u %OJDK_TAG% %OJDK_REMOTE_REPO_PROTOCOL%%OJDK_REMOTE_REPO%/!repo! %%G || exit /b 1
+					) else (
+						%HG% clone %OJDK_REMOTE_REPO_PROTOCOL%%OJDK_REMOTE_REPO%/!repo! %%G || exit /b 1
+					)
+				)
 			)
 		)
 		popd
 	)
-	exit /b
+
+	@echo *** fix permissions of jdk source code
+	rem takeown /f "%OJDK_SRC_PATH:/=\%" /r > nul || exit /b 1
+	rem icacls "%OJDK_SRC_PATH:/=\%" /reset /T /C /Q || exit /b 1
+	bash -c "chmod -R u+rwx ."
+	@echo off
+	rem print out the SCS ID of what we are building
+	@echo *** current SCS changeset
+	pushd "%OJDK_SRC_PATH%"
+	if defined USE_GIT (
+		%GIT% log -1
+	)
+	if defined USE_MERCURIAL (
+		%HG% id || exit /b 1
+	)
+	popd
+	exit /b 0
 
 :configure_jdk_build
 	@echo *** configure JDK build
 	rem create this file so that the JDK configure script can see it and confirm the existence of a VS toolchain
 	if not exist %OJDKBUILD_DIR%/tools/toolchain/vs2010e/VC/bin/x86_amd64/vcvarsx86_amd64.bat (
-		echo "rem placeholder for JDK configure script toolchain detection" >%OJDKBUILD_DIR%/tools/toolchain/vs2010e/VC/bin/x86_amd64/vcvarsx86_amd64.bat
+		echo rem placeholder for JDK configure script toolchain detection >%OJDKBUILD_DIR%/tools/toolchain/vs2010e/VC/bin/x86_amd64/vcvarsx86_amd64.bat
 	)
 	set CFGARGS=--enable-unlimited-crypto=yes
 	set CFGARGS=%CFGARGS% --with-conf-name=%OJDK_CONF% 
@@ -333,16 +347,14 @@
 	if defined JTREG_HOME (
 		set CFGARGS=!CFGARGS! --with-jtreg=%JTREG_HOME%
 	)
-	call :setsdkenv
 	pushd "%OJDK_SRC_PATH%"
 	C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -c "dir . -R | foreach { $_.LastWriteTime = [System.DateTime]::Now }"
 	bash configure %CFGARGS% || exit /b 1
 	popd || exit /b 1
-	exit /b
+	exit /b 0
 
 :build_jdk
 	@echo *** build JDK
-	call :setsdkenv
 	pushd "%OJDK_SRC_PATH%"
 	if ".%OJDK_DEBUG_LEVEL%" == ".slowdebug" (
 		set JDK_TARGETS=images
@@ -361,55 +373,106 @@
 		copy "%OJDK_SRC_PATH%/build/%OJDK_CONF%/jdk/objs\fdlibm.lib" "%OJDK_SRC_PATH%/build/%OJDK_CONF%/images/j2sdk-image/jre/lib/fdlibm.lib" || exit /b 1
 	)
 	if not defined BUILD_DEMOS (
-		rd /q/s "%OJDK_SRC_PATH:/=\%\build\%OJDK_CONF%\images\j2sdk-image\demo"
+		rd /q/s "%OJDK_SRC_DIR:/=\%\build\%OJDK_CONF%\images\j2sdk-image\demo"
 	)
 	popd || exit /b 1
-	@echo *** JDK build completed: JDK in "%OJDK_SRC_PATH%/build/%OJDK_CONF%/images/j2sdk-image"
-	exit /b
+	@echo *** JDK build completed: JDK in "%OJDK_SRC_DIR%/build/%OJDK_CONF%/images/j2sdk-image"
+	exit /b 0
+
+:test_jdk
+	@echo *** testing the JDK
+	set JTREG_HOME=c:\w\jtreg
+	set JAVA_HOME=
+	set JDK_HOME=
+	if exist "%OJDK_SRC_PATH%/build/%OJDK_CONF%/images/%ZIP_DIR_NAME%" (
+		set JDK_HOME=%OJDK_SRC_PATH%/build/%OJDK_CONF%/images/%ZIP_DIR_NAME%
+	)
+	if exist "%OJDK_SRC_PATH%/build/%OJDK_CONF%/images/j2sdk-image" (
+		set JDK_HOME=%OJDK_SRC_PATH%/build/%OJDK_CONF%/images/j2sdk-image
+	)
+	if not defined JDK_HOME (
+		@echo *** no JDK_HOME found in %OJDK_SRC_PATH%/build/%OJDK_CONF%/images
+		exit /b 1
+	)
+	call :setsdkenv
+	rem the version of Cygwin can cause tests to fail; see LocalProviders.sh
+	path %JTREG_HOME%/bin;%OJDKBUILD_DIR%/tools/cygwin/bin;%PATH%
+	pushd "%OJDK_SRC_PATH%"
+	rem make CONF=%OJDK_CONF% test TEST="tier1" JT_HOME=%JTREG_HOME%
+	if not exist "%WORK_DIR%/jtreg" (
+		mkdir -p "%WORK_DIR%/jtreg"
+	)
+	rem example test
+	set TESTS=%OJDK_SRC_PATH%/jdk/test/javax/xml
+	set TESTS=%OJDK_SRC_PATH%/jdk/test/java/util/Locale/LocaleProviders.sh
+	set TESTS=%OJDK_SRC_PATH%/jdk/test/java/SAXParserTest.java
+	path %JDK_HOME%\bin;%PATH%
+	@echo *** testing JDK in %JDK_HOME%
+	bash -c "jtreg -w %WORK_DIR:\=/%/jtreg/work -r %WORK_DIR:\=/%/jtreg/report -jdk:%JDK_HOME:\=/% %TESTS%"
+	popd || exit /b 1
+	exit /b 0
 
 :build_jdk_zip
 	@echo *** zip JDK release
 	if exist %source_dir%\%RELEASE_ZIPFILE% del %source_dir%\%RELEASE_ZIPFILE%
+	set JDK_IMAGE_DIR=j2sdk-image
 	pushd "%OJDK_SRC_PATH%/build/%OJDK_CONF%/images/"
-	if defined DELETE_DEBUG_FILES (
-		@echo *** remove debug files
-		bash -c "find j2sdk-image -name \*.diz -exec rm {} \;"
-		bash -c "find j2sdk-image -name \*.pdb -exec rm {} \;"
-		bash -c "find j2sdk-image -name \*.map -exec rm {} \;"
+	if exist "%JDK_IMAGE_DIR%" (
+		if defined DELETE_DEBUG_FILES (
+			@echo *** remove .diz debug files
+			bash -c "find %JDK_IMAGE_DIR% -name \*.diz -exec rm {} \;"
+			@echo *** remove .pdb debug files 
+			bash -c "find %JDK_IMAGE_DIR% -name \*.pdb -exec rm {} \;"
+			@echo *** remove .map debug files
+			bash -c "find %JDK_IMAGE_DIR% -name \*.map -exec rm {} \;"
+		)
+		if exist %ZIP_DIR_NAME% (
+			@echo *** remove existing %ZIP_DIR_NAME%
+			rd /q/s %ZIP_DIR_NAME% || exit /b 1
+		)
+		@echo *** rename %JDK_IMAGE_DIR% to %ZIP_DIR_NAME%
+		ren %JDK_IMAGE_DIR% %ZIP_DIR_NAME% || exit /b 1
 	)
-	if exist %ZIP_DIR_NAME% (
-		rd /s/q %ZIP_DIR_NAME%
+	if not exist "%ZIP_DIR_NAME%" (
+		@echo error: no jdk image found
+		exit /b 1
 	)
 	if exist %source_dir:/=\%\%RELEASE_ZIPFILE% (
 		del %source_dir:/=\%\%RELEASE_ZIPFILE%
 	)
-	ren j2sdk-image %ZIP_DIR_NAME% || exit /b 1
-	rem %OJDKBUILD_DIR%/tools/zip/zip -r %source_dir%\%RELEASE_ZIPFILE% ./%ZIP_DIR_NAME% || exit /b 1
 	bash -c "zip -r %source_dir:\=/%/%RELEASE_ZIPFILE% ./%ZIP_DIR_NAME%" || exit /b 1
+	rem restore the old directory name
+	ren %ZIP_DIR_NAME% %JDK_IMAGE_DIR% || exit /b 1
 	popd || exit /b 1
-	exit /b
+	exit /b 0
 
 :build_jre_zip
 	@echo *** zip JRE release
 	if exist %source_dir:/=\%\%RELEASE_JRE_ZIPFILE% del %source_dir:/=\%\%RELEASE_JRE_ZIPFILE%
 	pushd "%OJDK_SRC_PATH%/build/%OJDK_CONF%/images/" || exit /b 1
-	if defined DELETE_DEBUG_FILES (
-		@echo *** remove debug files
-		bash -c "find j2re-image -name \*.diz -exec rm {} \;"
-		bash -c "find j2re-image -name \*.pdb -exec rm {} \;"
-		bash -c "find j2re-image -name \*.map -exec rm {} \;"
+	if exist j2re-image (
+		if defined DELETE_DEBUG_FILES (
+			@echo *** remove debug files
+			bash -c "find j2re-image -name \*.diz -exec rm {} \;"
+			bash -c "find j2re-image -name \*.pdb -exec rm {} \;"
+			bash -c "find j2re-image -name \*.map -exec rm {} \;"
+		)
+		if exist %ZIP_JRE_DIR_NAME% (
+			rd /q/s %ZIP_JRE_DIR_NAME% || exit /b 1
+		)
+		ren j2re-image %ZIP_JRE_DIR_NAME% || exit /b 1
 	)
-	if exist %ZIP_JRE_DIR_NAME% (
-		rd /s/q %ZIP_JRE_DIR_NAME%
+	if not exist "%ZIP_JRE_DIR_NAME%" (
+		@echo "no jre image found"
+		exit /b 1
 	)
 	if exist %source_dir:/=\%\%RELEASE_JRE_ZIPFILE% (
 		del %source_dir:/=\%\%RELEASE_JRE_ZIPFILE%
 	)
-	ren j2re-image %ZIP_JRE_DIR_NAME% || exit /b 1
-	rem %OJDKBUILD_DIR%/tools/zip/zip -r %source_dir%\%RELEASE_JRE_ZIPFILE% ./%ZIP_JRE_DIR_NAME% || exit /b 1
 	bash -c "zip -r %source_dir:\=/%/%RELEASE_JRE_ZIPFILE% ./%ZIP_JRE_DIR_NAME%" || exit /b 1
+	ren %ZIP_JRE_DIR_NAME% j2re-image || exit /b 1
 	popd || exit /b 1
-	exit /b
+	exit /b 0
 
 :remove_debug_files
 	@echo *** remove debug files
@@ -417,23 +480,28 @@
 	bash -c "find j2sdk-image j2re-image -name \*.diz -exec rm {} \;"
 	bash -c "find j2sdk-image j2re-image -name \*.pdb -exec rm {} \;"
 	bash -c "find j2sdk-image j2re-image -name \*.map -exec rm {} \;"
-	exit /b
+	exit /b 0
 
 :build_freetype
 	@echo *** build freetype
 	if not exist "%OJDKBUILD_DIR%/deps/freetype/build" (
 		mkdir "%OJDKBUILD_DIR%/deps/freetype/build"
 	)
-	copy "%spec_dir:/=\%\ojdkbuild_freetype.def" "%OJDKBUILD_DIR:/=\%/deps\freetype\resources"
+	rem copy "%spec_dir:/=\%\ojdkbuild_freetype.def" "%OJDKBUILD_DIR:/=\%/deps\freetype\resources"
 	pushd "%OJDKBUILD_DIR%/deps/freetype/build"
 	call :setsdkenv
 	cmake -G "NMake Makefiles" -DOJDKBUILD_DIR=%OJDKBUILD_DIR% -Dopenjdk_EXE_VERSION=%OJDK_BUILD:b=% .. || exit /b 1
 	nmake || exit /b 1
 	popd
-	exit /b
+	exit /b 0
 
 :download_ojdkbuild
 	@echo *** fetch and check ojdkbuild
+	set m1=
+	set m2=
+	set m3=
+	set m4=
+	set modules=
 	if not exist %WORK_DIR%/ojdkbuild (
 		set OJDKBUILD_REPO=%OJDKBUILD_REPOBASE%/ojdkbuild.git
 		pushd "%WORK_DIR%" || exit /b 1
@@ -446,10 +514,10 @@
 	cd "%OJDKBUILD_DIR%"
 	if defined BUILD_JDK (
 		set m1=deps/freetype external/freetype lookaside/freetype
-		set m2=tools/bootjdk7 tools/cmake tools/make tools/zip
+		set m2=tools/bootjdk7 tools/cmake tools/cygwin_jdk11 tools/make tools/zip
 	)
 	set m3=tools/toolchain/directx tools/toolchain/msvcr100 tools/toolchain/sdk71 tools/toolchain/vs2010e
-	set modules=%m1% %m2% %m3%
+	set modules=%m1% %m2% %m3% %m4% %m5%
 	if not exist %OJDKBUILD_DIR%/deps      mkdir %OJDKBUILD_DIR:/=\%\deps
 	if not exist %OJDKBUILD_DIR%/external  mkdir %OJDKBUILD_DIR:/=\%\external
 	if not exist %OJDKBUILD_DIR%/lookaside mkdir %OJDKBUILD_DIR:/=\%\lookaside
@@ -463,7 +531,6 @@
 		)
 	)
 	if not exist "%OJDKBUILD_DIR%/lookaside" mkdir "%OJDKBUILD_DIR%/lookaside"
-	PATH C:/cygwin64/bin;%PATH%
 
 	@echo *** checkout and update freetype
 	rem pushd "%OJDKBUILD_DIR%/lookaside/freetype"
@@ -472,10 +539,12 @@
 
 	@echo ** fix permissions
 	cd "%WORK_DIR%" || exit /b 1
-	takeown /f "%OJDKBUILD_DIR:/=\%" /r > nul || exit /b 1
-	icacls "%OJDKBUILD_DIR:/=\%" /reset /T /C /Q || exit /b 1
+	rem takeown /f "%OJDKBUILD_DIR:/=\%" /r > nul || exit /b 1
+	rem icacls "%OJDKBUILD_DIR:/=\%" /reset /T /C /Q || exit /b 1
+	bash -c "chmod -R u+rwx ."
 	if defined CLAMSCAN %CLAMSCAN% --quiet --recursive ojdkbuild || exit /b 1
-	exit /b
+	@echo ** tools checked out sucessfully
+	exit /b 0
 
 :clean_jdk
 	@echo *** clean JDK
@@ -483,25 +552,40 @@
 	pushd "%OJDK_SRC_PATH%"
 	make CONF=%OJDK_CONF% clean
 	popd || exit /b 1
-	exit /b
+	exit /b 0
 
 :download_mercurial
 	@echo *** install mercurial
 	set HG=call :hg_cmd
-	set HG_DIR=.
-	exit /b
+	exit /b 0
 	
-	:hg_cmd
+:hg_cmd
 	@echo calling mercurial %*
 	c:\cygwin64\bin\bash -c "/bin/hg %*" || exit /b 1
-	exit /b
+	exit /b 0
 
-:download_git
-	@echo *** set git global options and path
+:download_boot_git
+	@rem this git is assumed to be on the system already, and will be used to download the ojdkbuild git.
+	PATH C:/cygwin64/bin;%PATH%
 	git config --global core.autocrlf input || exit /b 1
 	git config --global http.sslverify false || exit /b 1
 	set GIT="C:/cygwin64/bin/git.exe"
-	exit /b
+	exit /b 0
+	
+:download_git
+	@rem this git was downloaded by the boot git, and will be used to download the JDK.
+	set GIT=call :git_cmd
+	%GIT% config --global core.autocrlf input || exit /b 1
+	%GIT% config --global http.sslverify false || exit /b 1
+	exit /b 0
+	
+:git_cmd
+	@echo calling git %*
+	set OLDPATH=%PATH%
+	PATH c:\cygwin64\bin;%PATH%
+	c:\cygwin64\bin\bash -c "/bin/git %*" || exit /b 1
+	PATH %OLDPATH%
+	exit /b 0
 
 	rem subroutines
 :setsdkenv
@@ -539,7 +623,9 @@
 	set OBJCOPY=NOT_NEEDED_ON_WINDOWS
 
 	rem set path
-	set PATH=c:/cygwin64/bin
+	set PATH=
+	set PATH=%PATH%;%OJDKBUILD_DIR%/tools/cygwin_jdk11/bin/path_prepend
+	set PATH=%PATH%;%OJDKBUILD_DIR%/tools/cygwin_jdk11/bin
 	set PATH=%PATH%;C:/WINDOWS/System32;C:/WINDOWS;C:/WINDOWS/System32/wbem
 	set PATH=%PATH%;%VS%/Common7/IDE;%VS%/Common7/Tools;%VS%/VC/Bin/x86_amd64;%VS%/VC/Bin;%VS%/VC/Bin/VCPackages
 	set PATH=%PATH%;%WINSDK%/Bin
@@ -551,5 +637,7 @@
 	set PATH=%PATH%;%OJDKBUILD_DIR%/tools/make
 	set PATH=%PATH%;%OJDKBUILD_DIR%/tools/perl520/perl/bin
 	set PATH=%PATH%;%OJDKBUILD_DIR%/resources/scripts
-	exit /b
+	set PATH=%PATH%;C:/cygwin64/bin
+	
+	exit /b 0
 
