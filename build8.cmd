@@ -36,8 +36,6 @@
 	rem uncomment to retrieve from jdk8u-dev repository
 	rem set DEV_REPO=-dev
 
-	rem USE_SUB_REPOS=
-
 	rem uncomment and define to fetch OpenJDK source from GIT repo
 	set JDK_GIT_REPO=https://github.com/openjdk/jdk8u%DEV_REPO%.git
 
@@ -273,32 +271,6 @@
 				%HG% clone %OJDK_REMOTE_REPO_PROTOCOL%%OJDK_REMOTE_REPO% %OJDK_SRC_DIR% || exit /b 1
 			)
 		)
-	)
-	if defined USE_SUB_REPOS (
-		@echo *** fetch JDK subrepos
-		pushd "%OJDK_SRC_DIR%"
-		set jdkmodules=corba hotspot jaxp jaxws jdk langtools nashorn
-		for %%G in (!jdkmodules!) do (
-			set module=%%G
-			set repo=!module:/=_!
-			if not exist %%G (
-				if defined USE_GIT (
-					%GIT% clone %OJDK_REMOTE_REPO% %%G || exit /b 1
-					if defined OJDK_TAG (
-						cd %%G || exit /b 1
-						%GIT% checkout "%OJDK_TAG%" || exit /b 1
-					)
-				)
-				if defined USE_MERCURIAL (
-					if defined OJDK_TAG (
-						%HG% clone -u %OJDK_TAG% %OJDK_REMOTE_REPO_PROTOCOL%%OJDK_REMOTE_REPO%/!repo! %%G || exit /b 1
-					) else (
-						%HG% clone %OJDK_REMOTE_REPO_PROTOCOL%%OJDK_REMOTE_REPO%/!repo! %%G || exit /b 1
-					)
-				)
-			)
-		)
-		popd
 	)
 
 	@echo *** fix permissions of jdk source code
