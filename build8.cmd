@@ -9,7 +9,7 @@
 		set spec_dir=
 		set WORK_DIR=
 		set JAVA_HOME=
-		set EA_SUFFIX="_ea"
+		set EA_SUFFIX=""
 		set DEV_REPO=
 		set DOWNLOAD_TOOLS=1
 		set DOWNLOAD_JDK=1
@@ -25,13 +25,13 @@
 	
 	rem define source version
 	set UPDATE=322
-	set BUILD=b05
+	set BUILD=b06
 	set MILESTONE=redhat
 	set OJDK_MILESTONE=8u
 	set OJDK_UPDATE=322
-	set OJDK_BUILD=b05
+	set OJDK_BUILD=b06
 	set OJDK_TAG=jdk%OJDK_MILESTONE%%OJDK_UPDATE%-%OJDK_BUILD%
-	set EA_SUFFIX="_ea"
+	set EA_SUFFIX=""
 
 	rem uncomment to retrieve from jdk8u-dev repository
 	rem set DEV_REPO=-dev
