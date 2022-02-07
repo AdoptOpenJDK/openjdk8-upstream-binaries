@@ -9,7 +9,7 @@
 		set spec_dir=
 		set WORK_DIR=
 		set JAVA_HOME=
-		set EA_SUFFIX=""
+		set EA_SUFFIX="_ea"
 		set DEV_REPO=
 		set DOWNLOAD_TOOLS=1
 		set DOWNLOAD_JDK=1
