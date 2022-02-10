@@ -23,7 +23,7 @@ platform_name() {
 }
 
 UPDATE=332
-BUILD=b01
+BUILD=b02
 NAME="openjdk-8u${UPDATE}-${BUILD}"
 JRE_NAME="${NAME}-jre"
 TARBALL_BASE_NAME="OpenJDK8U"
