@@ -9,7 +9,7 @@
 		set spec_dir=
 		set WORK_DIR=
 		set JAVA_HOME=
-		set EA_SUFFIX="_ea"
+		set EA_SUFFIX=
 		set DEV_REPO=
 		set DOWNLOAD_TOOLS=1
 		set DOWNLOAD_JDK=1
@@ -28,8 +28,8 @@
 	set BUILD=b02
 	set MILESTONE=redhat
 	set OJDK_MILESTONE=8u
-	set OJDK_UPDATE=332
-	set OJDK_BUILD=b02
+	set OJDK_UPDATE=%UPDATE%
+	set OJDK_BUILD=%BUILD%
 	set OJDK_TAG=jdk%OJDK_MILESTONE%%OJDK_UPDATE%-%OJDK_BUILD%
 	set EA_SUFFIX="_ea"
 
@@ -143,7 +143,7 @@
 	if defined BUILD_JDK (
 		call :build_jdk || exit /b 1
 		time /t
-		rem call :test_jdk_version || exit /b 1
+		call :test_jdk_version
 		if defined PACKAGE_RELEASE (
 			call :build_jdk_zip || exit /b 1
 		)
@@ -237,9 +237,11 @@
 	icacls "%OJDK_SRC_PATH:/=\%" /reset /T /C /Q || exit /b 1
 	@echo off
 	rem print out the SCS ID of what we are building
+	call :setsdkenv
 	@echo *** current SCS changeset
 	pushd "%OJDK_SRC_PATH%"
 	%GIT% log -1
+
 	popd
 	exit /b 0
 
@@ -552,7 +554,4 @@
 	set PATH=%PATH%;%OJDKBUILD_DIR%/tools/make
 	set PATH=%PATH%;%OJDKBUILD_DIR%/tools/perl520/perl/bin
 	set PATH=%PATH%;%OJDKBUILD_DIR%/resources/scripts
-	set PATH=%PATH%;C:/cygwin64/bin
-	
 	exit /b 0
-
