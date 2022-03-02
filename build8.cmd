@@ -9,7 +9,7 @@
 		set spec_dir=
 		set WORK_DIR=
 		set JAVA_HOME=
-		set EA_SUFFIX=
+		set EA_SUFFIX="_ea"
 		set DEV_REPO=
 		set DOWNLOAD_TOOLS=1
 		set DOWNLOAD_JDK=1
@@ -25,7 +25,7 @@
 	
 	rem define source version
 	set UPDATE=332
-	set BUILD=b02
+	set BUILD=b04
 	set MILESTONE=redhat
 	set OJDK_MILESTONE=8u
 	set OJDK_UPDATE=%UPDATE%
@@ -230,18 +230,15 @@
 			%GIT% checkout "%OJDK_TAG%" || exit /b 1
 		)
 	)
-
 	@echo *** fix permissions of jdk source code
-	bash -c "chmod -R u+rwx ."
-	takeown /f "%OJDK_SRC_PATH:/=\%" /r > nul || exit /b 1
-	icacls "%OJDK_SRC_PATH:/=\%" /reset /T /C /Q || exit /b 1
+	bash -c "chmod -R 0777 %OJDK_SRC_PATH%"
+	rem takeown /f "%OJDK_SRC_PATH:/=\%" /r > nul || exit /b 1
+	rem icacls "%OJDK_SRC_PATH:/=\%" /reset /T /C /Q || exit /b 1
 	@echo off
 	rem print out the SCS ID of what we are building
-	call :setsdkenv
 	@echo *** current SCS changeset
 	pushd "%OJDK_SRC_PATH%"
 	%GIT% log -1
-
 	popd
 	exit /b 0
 
@@ -275,8 +272,8 @@
 		set CFGARGS=!CFGARGS! --with-jtreg=%JTREG_HOME%
 	)
 	pushd "%OJDK_SRC_PATH%"
-	C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -c "dir . -R | foreach { $_.LastWriteTime = [System.DateTime]::Now }"
-	bash configure %CFGARGS% || exit /b 1
+	rem C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -c "dir . -R | foreach { $_.LastWriteTime = [System.DateTime]::Now }"
+	bash ./configure %CFGARGS% || exit /b 1
 	popd || exit /b 1
 	exit /b 0
 
@@ -413,8 +410,9 @@
 	@echo *** build freetype
 	if not exist "%OJDKBUILD_DIR%/deps/freetype/build" (
 		mkdir "%OJDKBUILD_DIR%/deps/freetype/build"
+	) else (
+		@echo *** %OJDKBUILD_DIR%/deps/freetype/build already exists ***
 	)
-	rem copy "%spec_dir:/=\%\ojdkbuild_freetype.def" "%OJDKBUILD_DIR:/=\%/deps\freetype\resources"
 	pushd "%OJDKBUILD_DIR%/deps/freetype/build"
 	call :setsdkenv
 	cmake -G "NMake Makefiles" -DOJDKBUILD_DIR=%OJDKBUILD_DIR% -Dopenjdk_EXE_VERSION=%OJDK_BUILD:b=% .. || exit /b 1
@@ -428,6 +426,7 @@
 	set m2=
 	set m3=
 	set m4=
+	set m5=
 	set modules=
 	if not exist %WORK_DIR%/ojdkbuild (
 		set OJDKBUILD_REPO=%OJDKBUILD_REPOBASE%/ojdkbuild.git
@@ -444,6 +443,9 @@
 		set m2=tools/bootjdk7 tools/cmake tools/cygwin_jdk11 tools/make tools/zip
 	)
 	set m3=tools/toolchain/directx tools/toolchain/msvcr100 tools/toolchain/sdk71 tools/toolchain/vs2010e
+	if defined WITH_JTREG (
+		set m5=tools/jtreg42_653
+	)
 	set modules=%m1% %m2% %m3% %m4% %m5%
 	if not exist %OJDKBUILD_DIR%/deps      mkdir %OJDKBUILD_DIR:/=\%\deps
 	if not exist %OJDKBUILD_DIR%/external  mkdir %OJDKBUILD_DIR:/=\%\external
@@ -554,4 +556,8 @@
 	set PATH=%PATH%;%OJDKBUILD_DIR%/tools/make
 	set PATH=%PATH%;%OJDKBUILD_DIR%/tools/perl520/perl/bin
 	set PATH=%PATH%;%OJDKBUILD_DIR%/resources/scripts
+	set PATH=%PATH%;C:/cygwin64/bin
+	
 	exit /b 0
+
+
