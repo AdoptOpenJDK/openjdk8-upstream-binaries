@@ -426,7 +426,6 @@
 	set m2=
 	set m3=
 	set m4=
-	set m5=
 	set modules=
 	if not exist %WORK_DIR%/ojdkbuild (
 		set OJDKBUILD_REPO=%OJDKBUILD_REPOBASE%/ojdkbuild.git
@@ -443,9 +442,6 @@
 		set m2=tools/bootjdk7 tools/cmake tools/cygwin_jdk11 tools/make tools/zip
 	)
 	set m3=tools/toolchain/directx tools/toolchain/msvcr100 tools/toolchain/sdk71 tools/toolchain/vs2010e
-	if defined WITH_JTREG (
-		set m5=tools/jtreg42_653
-	)
 	set modules=%m1% %m2% %m3% %m4% %m5%
 	if not exist %OJDKBUILD_DIR%/deps      mkdir %OJDKBUILD_DIR:/=\%\deps
 	if not exist %OJDKBUILD_DIR%/external  mkdir %OJDKBUILD_DIR:/=\%\external
