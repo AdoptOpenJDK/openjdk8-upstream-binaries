@@ -28,8 +28,8 @@
 	set BUILD=b04
 	set MILESTONE=redhat
 	set OJDK_MILESTONE=8u
-	set OJDK_UPDATE=332
-	set OJDK_BUILD=b04
+	set OJDK_UPDATE=%UPDATE%
+	set OJDK_BUILD=%BUILD%
 	set OJDK_TAG=jdk%OJDK_MILESTONE%%OJDK_UPDATE%-%OJDK_BUILD%
 	set EA_SUFFIX="_ea"
 
@@ -143,7 +143,7 @@
 	if defined BUILD_JDK (
 		call :build_jdk || exit /b 1
 		time /t
-		rem call :test_jdk_version || exit /b 1
+		call :test_jdk_version
 		if defined PACKAGE_RELEASE (
 			call :build_jdk_zip || exit /b 1
 		)
@@ -230,11 +230,10 @@
 			%GIT% checkout "%OJDK_TAG%" || exit /b 1
 		)
 	)
-
 	@echo *** fix permissions of jdk source code
-	bash -c "chmod -R u+rwx ."
-	takeown /f "%OJDK_SRC_PATH:/=\%" /r > nul || exit /b 1
-	icacls "%OJDK_SRC_PATH:/=\%" /reset /T /C /Q || exit /b 1
+	bash -c "chmod -R 0777 %OJDK_SRC_PATH%"
+	rem takeown /f "%OJDK_SRC_PATH:/=\%" /r > nul || exit /b 1
+	rem icacls "%OJDK_SRC_PATH:/=\%" /reset /T /C /Q || exit /b 1
 	@echo off
 	rem print out the SCS ID of what we are building
 	@echo *** current SCS changeset
@@ -273,8 +272,8 @@
 		set CFGARGS=!CFGARGS! --with-jtreg=%JTREG_HOME%
 	)
 	pushd "%OJDK_SRC_PATH%"
-	C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -c "dir . -R | foreach { $_.LastWriteTime = [System.DateTime]::Now }"
-	bash configure %CFGARGS% || exit /b 1
+	rem C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -c "dir . -R | foreach { $_.LastWriteTime = [System.DateTime]::Now }"
+	bash ./configure %CFGARGS% || exit /b 1
 	popd || exit /b 1
 	exit /b 0
 
@@ -411,8 +410,9 @@
 	@echo *** build freetype
 	if not exist "%OJDKBUILD_DIR%/deps/freetype/build" (
 		mkdir "%OJDKBUILD_DIR%/deps/freetype/build"
+	) else (
+		@echo *** %OJDKBUILD_DIR%/deps/freetype/build already exists ***
 	)
-	rem copy "%spec_dir:/=\%\ojdkbuild_freetype.def" "%OJDKBUILD_DIR:/=\%/deps\freetype\resources"
 	pushd "%OJDKBUILD_DIR%/deps/freetype/build"
 	call :setsdkenv
 	cmake -G "NMake Makefiles" -DOJDKBUILD_DIR=%OJDKBUILD_DIR% -Dopenjdk_EXE_VERSION=%OJDK_BUILD:b=% .. || exit /b 1
@@ -555,4 +555,5 @@
 	set PATH=%PATH%;C:/cygwin64/bin
 	
 	exit /b 0
+
 
