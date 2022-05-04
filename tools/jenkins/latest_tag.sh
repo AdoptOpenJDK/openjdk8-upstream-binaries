@@ -7,7 +7,7 @@
 #set -xv
 
 # 8u update cycle release version number
-UPDATE=332
+UPDATE=342
 JDK_URL=https://github.com/openjdk/jdk8u
 JDK_REPO=jdk8u-git
 BASE_PATH="$1"
