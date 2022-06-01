@@ -25,11 +25,11 @@
 	
 	rem define source version
 	set UPDATE=342
-	set BUILD=b03
+	set BUILD=b04
 	set MILESTONE=redhat
 	set OJDK_MILESTONE=8u
 	set OJDK_UPDATE=342
-	set OJDK_BUILD=b03
+	set OJDK_BUILD=b04
 	set OJDK_TAG=jdk%OJDK_MILESTONE%%OJDK_UPDATE%-%OJDK_BUILD%
 	set EA_SUFFIX="_ea"
 
